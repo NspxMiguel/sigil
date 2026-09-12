@@ -177,19 +177,21 @@ struct MainView: View {
                 pickImage()
             }
 
-            GlassButton(
-                title: text(.contributeAction),
-                prominent: false,
-                enabled: selectedDrive != nil && !busy
-            ) {
+            // Deliberately quiet: this is the path for the handful of people
+            // who already own a working drive, not the main action.
+            Button {
                 Task { await capture() }
+            } label: {
+                Text(text(.contributeQuiet))
+                    .font(.system(size: 13))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Palette.tertiaryText(scheme))
+                    .underline(selectedDrive != nil, pattern: .solid)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            Text(text(.contributeSubtitle))
-                .font(.system(size: 13))
-                .multilineTextAlignment(.center)
-                .foregroundStyle(Palette.tertiaryText(scheme))
-                .fixedSize(horizontal: false, vertical: true)
+            .buttonStyle(.plain)
+            .disabled(selectedDrive == nil || busy)
+            .padding(.top, 4)
 
             if let notice {
                 Text(notice)

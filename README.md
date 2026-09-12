@@ -1,7 +1,9 @@
 # Sigil
 
-A macOS app for capturing and transplanting PS5 extended storage partition
-headers, with guard rails so nobody has to point `dd` at the wrong disk.
+An app for capturing and transplanting PS5 extended storage partition headers,
+with guard rails so nobody has to point `dd` at the wrong disk.
+
+![Sigil](docs/sigil.png)
 
 > **Status: experimental, and currently blocked.** The technique this tool
 > automates is known to have worked on PS5 firmware 4.03, but the extended
