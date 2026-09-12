@@ -31,19 +31,75 @@ pub fn capture(drive: &Drive, bytes: u64, destination: &Path) -> Result<(), Patc
 }
 
 pub fn write(image: &Path, drive: &Drive) -> Result<(), PatchError> {
+    let prepared = prepare_image(image)?;
+
+    if prepared.byte_size > drive.byte_size {
+        return Err(PatchError::ImageTooLarge);
+    }
+
+    let result = elevate(&platform::write_command(
+        &prepared.path.to_string_lossy(),
+        &drive.device_path,
+        &drive.id,
+    ));
+
+    if prepared.is_padded_copy {
+        let _ = std::fs::remove_file(&prepared.path);
+    }
+    result
+}
+
+/// Every sector size in use (512 and 4096) divides this.
+const SECTOR_ALIGNMENT: u64 = 4096;
+
+pub(crate) struct PreparedImage {
+    pub path: std::path::PathBuf,
+    pub byte_size: u64,
+    pub is_padded_copy: bool,
+}
+
+/// Raw devices refuse a write whose length is not a whole number of sectors:
+/// macOS `dd` to `/dev/rdiskN` fails the trailing partial block with EINVAL,
+/// and `\\.\PhysicalDriveN` on Windows behaves the same. Hand-trimmed header
+/// images carry no alignment guarantee, so they are zero-padded to the next
+/// 4 KiB boundary in a temporary copy. The original file is never modified.
+pub(crate) fn prepare_image(image: &Path) -> Result<PreparedImage, PatchError> {
     let size = std::fs::metadata(image)
         .map_err(|error| PatchError::UnreadableImage(error.to_string()))?
         .len();
 
-    if size > drive.byte_size {
-        return Err(PatchError::ImageTooLarge);
+    let remainder = size % SECTOR_ALIGNMENT;
+    if remainder == 0 {
+        return Ok(PreparedImage {
+            path: image.to_path_buf(),
+            byte_size: size,
+            is_padded_copy: false,
+        });
     }
 
-    elevate(&platform::write_command(
-        &image.to_string_lossy(),
-        &drive.device_path,
-        &drive.id,
-    ))
+    let padded_size = size + (SECTOR_ALIGNMENT - remainder);
+    let padded = std::env::temp_dir().join(format!(
+        "sigil-aligned-{}-{}.img",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|elapsed| elapsed.as_nanos())
+            .unwrap_or_default()
+    ));
+
+    std::fs::copy(image, &padded)
+        .map_err(|error| PatchError::UnreadableImage(error.to_string()))?;
+    std::fs::OpenOptions::new()
+        .write(true)
+        .open(&padded)
+        .and_then(|file| file.set_len(padded_size))
+        .map_err(|error| PatchError::UnreadableImage(error.to_string()))?;
+
+    Ok(PreparedImage {
+        path: padded,
+        byte_size: padded_size,
+        is_padded_copy: true,
+    })
 }
 
 fn elevate(command: &platform::ElevatedCommand) -> Result<(), PatchError> {
@@ -81,24 +137,32 @@ mod platform {
     }
 
     pub fn capture_command(device: &str, destination: &str, megabytes: u64) -> ElevatedCommand {
-        shell(&format!(
+        shell(&capture_shell(device, destination, megabytes))
+    }
+
+    pub fn write_command(image: &str, device: &str, _id: &str) -> ElevatedCommand {
+        shell(&write_shell(image, device))
+    }
+
+    pub(crate) fn capture_shell(device: &str, destination: &str, megabytes: u64) -> String {
+        format!(
             "/bin/dd if={} of={} bs=1m count={}",
             quote(device),
             quote(destination),
             megabytes
-        ))
+        )
     }
 
-    pub fn write_command(image: &str, device: &str, _id: &str) -> ElevatedCommand {
+    pub(crate) fn write_shell(image: &str, device: &str) -> String {
         // diskutil wants the buffered device (/dev/diskN); dd gets the raw one
         // (/dev/rdiskN), which is far faster for block-sized transfers.
         let buffered = device.replace("/dev/r", "/dev/");
-        shell(&format!(
+        format!(
             "/usr/sbin/diskutil unmountDisk {} && /bin/dd if={} of={} bs=1m",
             quote(&buffered),
             quote(image),
             quote(device)
-        ))
+        )
     }
 
     fn shell(command: &str) -> ElevatedCommand {
@@ -259,5 +323,137 @@ Set-Disk -Number {id} -IsOffline $false"#
             });
         }
         out
+    }
+}
+
+/// Round-trips the exact shell commands the app runs against real block
+/// devices. Opt-in only: the test writes to whatever the two variables point
+/// at, so it must never run by default. Point them at attached disk images:
+///
+/// ```sh
+/// SIGIL_DISK_TEST_DONOR=/dev/rdisk14 SIGIL_DISK_TEST_TARGET=/dev/rdisk15 cargo test disk_ -- --nocapture
+/// ```
+#[cfg(all(test, target_os = "macos"))]
+mod disk_tests {
+    use super::platform::{capture_shell, write_shell};
+    use std::process::Command;
+
+    fn devices() -> Option<(String, String)> {
+        let donor = std::env::var("SIGIL_DISK_TEST_DONOR").ok()?;
+        let target = std::env::var("SIGIL_DISK_TEST_TARGET").ok()?;
+        Some((donor, target))
+    }
+
+    fn pattern(len: usize, seed: u32) -> Vec<u8> {
+        let mut state = seed;
+        (0..len)
+            .map(|_| {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                (state >> 24) as u8
+            })
+            .collect()
+    }
+
+    fn sh(command: &str) {
+        let output = Command::new("/bin/sh")
+            .arg("-c")
+            .arg(command)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "command failed: {command}\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    #[test]
+    fn disk_capture_reads_exactly_the_leading_sectors() {
+        let Some((donor, _)) = devices() else { return };
+        let dir = tempdir();
+        let seed_path = dir.join("seed.bin");
+        let seed = pattern(4 * 1024 * 1024, 7);
+        std::fs::write(&seed_path, &seed).unwrap();
+        sh(&format!(
+            "/bin/dd if='{}' of='{donor}' bs=1m",
+            seed_path.display()
+        ));
+
+        let out = dir.join("captured.img");
+        sh(&capture_shell(&donor, &out.to_string_lossy(), 4));
+
+        assert_eq!(
+            std::fs::read(&out).unwrap(),
+            seed,
+            "capture did not match donor"
+        );
+    }
+
+    #[test]
+    fn disk_write_lands_an_image_that_is_not_block_aligned() {
+        let Some((_, target)) = devices() else { return };
+        let dir = tempdir();
+        // Deliberately not a multiple of the 512-byte sector: hand-trimmed
+        // header images are not guaranteed to be aligned.
+        let image = pattern(1_500_123, 11);
+        let image_path = dir.join("header.img");
+        std::fs::write(&image_path, &image).unwrap();
+
+        let prepared = super::prepare_image(&image_path).unwrap();
+        assert!(prepared.is_padded_copy);
+        assert_eq!(prepared.byte_size % 4096, 0);
+        assert_eq!(
+            std::fs::read(&image_path).unwrap(),
+            image,
+            "original was modified"
+        );
+
+        sh(&write_shell(&prepared.path.to_string_lossy(), &target));
+
+        let back = dir.join("readback.bin");
+        sh(&format!(
+            "/bin/dd if='{target}' of='{}' bs=1m count=2",
+            back.display()
+        ));
+        let read = std::fs::read(&back).unwrap();
+        assert_eq!(
+            &read[..image.len()],
+            &image[..],
+            "target does not hold the image"
+        );
+        assert!(
+            read[image.len()..prepared.byte_size as usize]
+                .iter()
+                .all(|&byte| byte == 0),
+            "padding past the image is not zeroed"
+        );
+    }
+
+    #[test]
+    fn disk_images_are_never_listed_as_targets() {
+        let Some((donor, target)) = devices() else {
+            return;
+        };
+        let listed = crate::drives::list().unwrap();
+        for device in [donor, target] {
+            let bsd = device.trim_start_matches("/dev/r").to_string();
+            assert!(
+                !listed.iter().any(|drive| drive.id == bsd),
+                "{bsd} is a disk image and must not be offered as a target"
+            );
+        }
+    }
+
+    fn tempdir() -> std::path::PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "sigil-test-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
     }
 }
