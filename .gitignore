@@ -21,3 +21,6 @@ DerivedData/
 
 # macOS
 .DS_Store
+
+# SwiftPM
+.build/

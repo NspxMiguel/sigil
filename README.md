@@ -1,4 +1,4 @@
-# Torii
+# Sigil
 
 A macOS app for capturing and transplanting PS5 extended storage partition
 headers, with guard rails so nobody has to point `dd` at the wrong disk.
@@ -75,14 +75,14 @@ confirming, and do not run this against a drive holding anything you care about.
 ## Install
 
 ```bash
-brew install --cask nspxmiguel/tap/torii
+brew install --cask nspxmiguel/tap/sigil
 ```
 
 ## Build from source
 
 ```bash
-git clone https://github.com/NspxMiguel/torii.git
-cd torii
+git clone https://github.com/NspxMiguel/sigil.git
+cd sigil
 ./build.sh
 ```
 
