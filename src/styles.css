@@ -135,48 +135,27 @@ header {
 }
 
 .mark {
-    width: 84px;
-    height: 84px;
+    width: 132px;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
-.mark-ring {
-    stroke: var(--text);
-    stroke-opacity: 0.18;
-    stroke-width: 1.6;
+/* While a read or write is in flight the mark breathes, instead of a spinner
+   sitting next to it. */
+.mark.busy {
+    animation: breathe 1.4s var(--ease) infinite alternate;
 }
 
-.mark-sweep {
-    stroke: var(--accent);
-    stroke-width: 2.8;
-    stroke-linecap: round;
-    stroke-dasharray: 289;
-    stroke-dashoffset: 289;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-    opacity: 0;
-}
-
-.mark.busy .mark-sweep {
-    opacity: 1;
-    animation: sweep 1.6s linear infinite;
-}
-
-@keyframes sweep {
+@keyframes breathe {
     from {
-        stroke-dashoffset: 289;
+        transform: scale(1);
+        filter: brightness(1);
     }
     to {
-        stroke-dashoffset: 0;
+        transform: scale(1.04);
+        filter: brightness(1.18);
     }
-}
-
-.mark-glyphs {
-    stroke: var(--text);
-    stroke-opacity: 0.92;
-    stroke-width: 2.2;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-    fill: none;
 }
 
 h1 {
@@ -399,7 +378,7 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .mark.busy .mark-sweep {
+    .mark.busy {
         animation: none;
     }
     .glass {

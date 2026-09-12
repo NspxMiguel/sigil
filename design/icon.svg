@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a7be0"/>
+      <stop offset=".48" stop-color="#0a3a7a"/>
+      <stop offset=".72" stop-color="#05172f"/>
+      <stop offset="1" stop-color="#02080f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".2" r=".62">
+      <stop offset="0" stop-color="#6cc6ff" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#6cc6ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="pcb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#243044"/>
+      <stop offset="1" stop-color="#0c121c"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f9fd"/>
+      <stop offset="1" stop-color="#c9d4e2"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f6d98a"/>
+      <stop offset="1" stop-color="#b98a33"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8ad8ff"/>
+      <stop offset="1" stop-color="#2b86dc"/>
+    </linearGradient>
+    <filter id="lift" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="228" fill="url(#glow)"/>
+
+  <g transform="translate(500 440) rotate(-20)" filter="url(#lift)">
+    <rect x="-340" y="-92" width="690" height="184" rx="20" fill="url(#pcb)"/>
+    <rect x="-340" y="-92" width="690" height="184" rx="20" fill="none" stroke="#4a5d78" stroke-width="5"/>
+    <!-- screw notch -->
+    <path d="M-340 -26 A26 26 0 0 1 -340 26" fill="none" stroke="#8fa3bd" stroke-width="8"/>
+    <!-- label -->
+    <rect x="-292" y="-62" width="400" height="124" rx="12" fill="url(#label)"/>
+    <rect x="-292" y="-62" width="26" height="124" rx="6" fill="#2b86dc"/>
+    <rect x="-246" y="-34" width="210" height="16" rx="8" fill="#8594a8"/>
+    <rect x="-246" y="-6" width="290" height="12" rx="6" fill="#aab6c6"/>
+    <rect x="-246" y="18" width="160" height="12" rx="6" fill="#aab6c6"/>
+    <!-- controller -->
+    <rect x="140" y="-58" width="112" height="116" rx="10" fill="#131b27" stroke="#34445a" stroke-width="4"/>
+    <!-- edge connector with key -->
+    <g fill="url(#gold)">
+      <rect x="290" y="-80" width="52" height="13" rx="3"/>
+      <rect x="290" y="-60" width="52" height="13" rx="3"/>
+      <rect x="290" y="-40" width="52" height="13" rx="3"/>
+      <rect x="290" y="-4" width="52" height="13" rx="3"/>
+      <rect x="290" y="16" width="52" height="13" rx="3"/>
+      <rect x="290" y="36" width="52" height="13" rx="3"/>
+      <rect x="290" y="56" width="52" height="13" rx="3"/>
+    </g>
+  </g>
+
+  <!-- unlocked badge -->
+  <g transform="translate(704 652)" filter="url(#lift)">
+    <circle r="150" fill="url(#badge)"/>
+    <circle r="150" fill="none" stroke="#ffffff" stroke-width="16"/>
+    <path d="M-40 -8 V-58 A40 40 0 0 1 40 -58 V-44" fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round"/>
+    <rect x="-68" y="-8" width="136" height="104" rx="22" fill="#ffffff"/>
+    <circle cy="34" r="15" fill="#2b86dc"/>
+    <rect x="-6" y="36" width="12" height="30" rx="6" fill="#2b86dc"/>
+  </g>
+</svg>
