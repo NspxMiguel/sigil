@@ -1,0 +1,23 @@
+# Working notes — ours, not documentation for the repository
+PEDIDOS.md
+IDEIAS.md
+CONTRATO.md
+DESIGN.md
+
+# Captured drive images — never commit these
+*.img
+*.img.gz
+*.bin
+dumps/
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.swiftpm/
+
+# macOS
+.DS_Store
