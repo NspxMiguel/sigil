@@ -179,18 +179,31 @@ struct MainView: View {
 
             // Deliberately quiet: this is the path for the handful of people
             // who already own a working drive, not the main action.
+            //
+            // It stays enabled with no drive selected on purpose. Disabling it
+            // made the copy promise an action and then do nothing at all when
+            // clicked, with the reason buried further down the window.
             Button {
-                Task { await capture() }
+                if selectedDrive == nil {
+                    notice = text(.contributeNeedsDrive)
+                } else {
+                    Task { await capture() }
+                }
             } label: {
                 Text(text(.contributeQuiet))
                     .font(.system(size: 13))
                     .multilineTextAlignment(.center)
-                    .foregroundStyle(Palette.tertiaryText(scheme))
-                    .underline(selectedDrive != nil, pattern: .solid)
+                    .foregroundStyle(
+                        selectedDrive == nil
+                            ? Palette.tertiaryText(scheme)
+                            : Palette.secondaryText(scheme)
+                    )
+                    .underline(pattern: .solid)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .buttonStyle(.plain)
-            .disabled(selectedDrive == nil || busy)
+            .disabled(busy)
+            .accessibilityLabel(text(.contributeQuiet))
             .padding(.top, 4)
 
             if let notice {

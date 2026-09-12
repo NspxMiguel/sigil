@@ -65,6 +65,7 @@ enum StringKey {
     case contributeAction
     case contributeSubtitle
     case contributeQuiet
+    case contributeNeedsDrive
 
     case driveSectionLabel
     case noDriveTitle
@@ -114,6 +115,8 @@ enum StringKey {
             return "Already running a supported drive in your PS5? Read its header and help unblock this."
         case .contributeQuiet:
             return "Have your own Gen4 SSD and want to dump from it? Click here"
+        case .contributeNeedsDrive:
+            return "Connect the drive in a USB enclosure and pick it under Connected drives first."
 
         case .driveSectionLabel: return "Connected drives"
         case .noDriveTitle: return "No external drive connected"
@@ -161,6 +164,8 @@ enum StringKey {
             return "Já tem um drive compatível rodando no seu PS5? Leia o cabeçalho dele e ajude a destravar isto."
         case .contributeQuiet:
             return "Tem seu próprio SSD Gen4 e quer dumpar dele? Clique aqui"
+        case .contributeNeedsDrive:
+            return "Ligue o drive numa case USB e escolha ele em Drives conectados primeiro."
 
         case .driveSectionLabel: return "Drives conectados"
         case .noDriveTitle: return "Nenhum drive externo conectado"
