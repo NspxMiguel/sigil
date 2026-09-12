@@ -1,6 +1,6 @@
 [package]
 name = "sigil"
-version = "0.1.1"
+version = "0.1.2"
 description = "Capture and transplant PS5 extended storage partition headers"
 authors = ["NSPX"]
 license = "MIT"
