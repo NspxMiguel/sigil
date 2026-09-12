@@ -24,3 +24,8 @@ DerivedData/
 
 # SwiftPM
 .build/
+
+# Tauri / JS
+src-tauri/target/
+src-tauri/gen/
+node_modules/

@@ -1,0 +1,69 @@
+name: Release
+
+on:
+    push:
+        tags: ["v*"]
+    workflow_dispatch:
+
+permissions:
+    contents: write
+
+jobs:
+    build:
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    # Both Apple architectures in one universal binary, so a single
+                    # download works on Intel and Apple silicon.
+                    - platform: macos-latest
+                      target: universal-apple-darwin
+                      args: --target universal-apple-darwin
+                    - platform: ubuntu-22.04
+                      target: linux
+                      args: ""
+                    - platform: windows-latest
+                      target: windows
+                      args: ""
+
+        runs-on: ${{ matrix.platform }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Install Linux build dependencies
+              if: matrix.platform == 'ubuntu-22.04'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y \
+                    libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+            - uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+            - uses: swatinem/rust-cache@v2
+              with:
+                  workspaces: src-tauri
+
+            - uses: oven-sh/setup-bun@v2
+            - run: bun install
+
+            - uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tagName: ${{ github.ref_name }}
+                  releaseName: Sigil ${{ github.ref_name }}
+                  releaseBody: |
+                      Download the build for your system below.
+
+                      - Windows: the `.msi` installer
+                      - macOS: the `.dmg`
+                      - Linux: the `.AppImage` or `.deb`
+
+                      The macOS build is signed ad-hoc rather than with a paid Developer
+                      ID, so Gatekeeper asks once on first launch: right-click the app and
+                      choose Open.
+                  releaseDraft: true
+                  prerelease: false
+                  args: ${{ matrix.args }}

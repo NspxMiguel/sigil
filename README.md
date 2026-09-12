@@ -1,7 +1,7 @@
 # Sigil
 
-An app for capturing and transplanting PS5 extended storage partition headers,
-with guard rails so nobody has to point `dd` at the wrong disk.
+Capture and transplant PS5 extended storage partition headers, with guard rails
+so nobody has to point `dd` at the wrong disk. Windows, macOS and Linux.
 
 ![Sigil](docs/sigil.png)
 
@@ -33,8 +33,8 @@ jailbreak are involved — this runs on stock firmware.
 
 The extended storage partition layout changed on newer firmware, so images
 built for 4.03 are no longer recognized. Rebuilding one requires a sample of
-the current layout, which means a read-only dump of the leading sectors from a
-Gen4 drive that is already formatted and working in a PS5 on current firmware.
+the current layout: a read-only dump of the leading sectors from a Gen4 NVMe
+SSD that is already formatted and working in a PS5 on current firmware.
 
 Two open questions determine whether the approach survives at all:
 
@@ -45,22 +45,24 @@ Two open questions determine whether the approach survives at all:
   extended storage. If that applies here, a donor has to match the target's
   capacity rather than being any Gen4 drive.
 
-If you have a Gen4 expansion drive in a PS5 on current firmware and are willing
-to contribute a read-only header dump, open an issue. Nothing is written to your
-drive and installed games are untouched.
+**If you have a Gen4 NVMe SSD working in a PS5 and are willing to contribute a
+read-only header dump, open an issue.** Sigil does it in two clicks and writes
+nothing to your drive; installed games are untouched.
 
 ## What the app does
 
-- Enumerates removable NVMe drives and refuses to touch the boot disk or any
-  internal volume.
-- Captures a read-only header image from a donor drive.
-- Writes a header image onto a target drive, behind an explicit confirmation
-  that names the destination.
-- Verifies the write by reading the region back and comparing.
-
-Both directions are ordinary block-level reads and writes. The app exists to
-make the destination unambiguous, because the failure mode of doing this by
-hand is destroying the wrong disk.
+- Enumerates removable external drives and refuses to touch boot or internal
+  media. Each platform filters at the source and the result is checked again
+  before it reaches the interface.
+- Fetches published headers from this repository and verifies every download
+  against its `sha256` before it can be written.
+- Falls back to an image file you supply when GitHub is unreachable, or when
+  nothing is published for your firmware yet.
+- Captures a read-only header from a donor drive and opens a pre-addressed
+  draft in your own mail client. It ships no credentials and sends nothing by
+  itself.
+- Puts every write behind the operating system's own elevation prompt. The
+  password is typed into a dialog the OS puts up; the app never sees it.
 
 ## Safety
 
@@ -69,23 +71,37 @@ offer internal or boot volumes as targets, and every write is confirmed against
 a named destination. Even so: verify the disk identifier yourself before
 confirming, and do not run this against a drive holding anything you care about.
 
-## Requirements
-
-- macOS 14 or later
-- A USB NVMe enclosure or an M.2 slot to attach drives to
-
 ## Install
 
-```bash
-brew install --cask nspxmiguel/tap/sigil
-```
+Grab the build for your system from the
+[releases page](https://github.com/NspxMiguel/sigil/releases):
+
+| System | File |
+| --- | --- |
+| Windows | `.msi` installer |
+| macOS | `.dmg` |
+| Linux | `.AppImage` or `.deb` |
+
+The macOS build is signed ad-hoc rather than with a paid Developer ID, so
+Gatekeeper asks once on first launch: right-click the app and choose Open.
 
 ## Build from source
+
+Needs [Rust](https://rustup.rs) and [Bun](https://bun.sh).
 
 ```bash
 git clone https://github.com/NspxMiguel/sigil.git
 cd sigil
-./build.sh
+bun install
+bun run tauri build
+```
+
+`bun run tauri dev` runs it with the web inspector attached.
+
+Linux also needs the WebKitGTK development packages:
+
+```bash
+sudo apt install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 ```
 
 ## Credits

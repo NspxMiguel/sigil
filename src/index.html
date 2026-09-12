@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sigil</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <canvas id="field" aria-hidden="true"></canvas>
+        <div class="scrim" aria-hidden="true"></div>
+
+        <select id="language" class="language" aria-label="Language">
+            <option value="en">English</option>
+            <option value="pt">Português</option>
+        </select>
+
+        <main>
+            <header>
+                <svg id="mark" class="mark" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+                    <circle class="mark-ring" cx="50" cy="50" r="46" />
+                    <circle class="mark-sweep" cx="50" cy="50" r="46" />
+                    <g class="mark-glyphs">
+                        <!-- Open padlock: the shackle stays attached on the left only. -->
+                        <path d="M43 36 V27 A7 7 0 0 1 57 27 V29" />
+                        <rect x="39" y="36" width="22" height="16" rx="3" />
+                        <path d="M50 42 V46" />
+                        <!-- M.2 drive: board, two packages, the keyed edge connector. -->
+                        <rect x="17" y="60" width="58" height="18" rx="2.5" />
+                        <rect x="24" y="64.5" width="14" height="9" rx="1" />
+                        <rect x="42" y="64.5" width="14" height="9" rx="1" />
+                        <path d="M75 62 H82 V67 H79 V71 H82 V76 H75" />
+                    </g>
+                </svg>
+
+                <h1 data-i18n="appName">Sigil</h1>
+                <p class="tagline" data-i18n="tagline"></p>
+            </header>
+
+            <section id="catalog" class="catalog"></section>
+
+            <section class="actions">
+                <p id="picked" class="picked" hidden></p>
+
+                <button
+                    id="patch"
+                    class="glass prominent"
+                    disabled
+                    data-i18n="patchAction"
+                ></button>
+                <button id="pick" class="glass" data-i18n="chooseOwnImage"></button>
+
+                <button id="capture" class="quiet" data-i18n="contributeQuiet"></button>
+
+                <p id="notice" class="notice" hidden></p>
+            </section>
+
+            <section class="drives">
+                <h2 class="label" data-i18n="driveSectionLabel"></h2>
+                <div id="driveList"></div>
+            </section>
+        </main>
+
+        <script type="module" src="app.js"></script>
+    </body>
+</html>

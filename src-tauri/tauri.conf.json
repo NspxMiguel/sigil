@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Sigil",
+  "version": "0.1.0",
+  "identifier": "com.sigil.app",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Sigil",
+        "width": 720,
+        "height": 800,
+        "minWidth": 560,
+        "minHeight": 640,
+        "resizable": true,
+        "theme": null
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+    },
+    "withGlobalTauri": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "msi",
+      "app",
+      "dmg",
+      "appimage",
+      "deb"
+    ],
+    "icon": [
+      "icons/icon.png"
+    ],
+    "copyright": "Copyright (c) 2026 NSPX",
+    "category": "Utility",
+    "shortDescription": "Capture and transplant PS5 extended storage headers",
+    "longDescription": "Sigil captures and transplants PS5 extended storage partition headers, with guard rails so nobody has to point dd at the wrong disk."
+  }
+}
